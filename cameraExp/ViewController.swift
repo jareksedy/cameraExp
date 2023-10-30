@@ -9,21 +9,20 @@ import UIKit
 import AVFoundation
 
 fileprivate enum Constants {
-    static let  circleSize: CGFloat = 300
+    static let circleSize: CGFloat = UIScreen.main.bounds.width - 50
+    static let circleSizeSmall: CGFloat = UIScreen.main.bounds.width - 200
 }
 
 class ViewController: UIViewController {
     var captureSession: AVCaptureSession!
-    
-    var previewLayer1: AVCaptureVideoPreviewLayer!
-    var previewLayer2: AVCaptureVideoPreviewLayer!
-    var previewLayer3: AVCaptureVideoPreviewLayer!
-
+    var previewLayer: AVCaptureVideoPreviewLayer!
     var sessionQueue = DispatchQueue(label: "sessionQueue", qos: .userInteractive)
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = .systemBlue
         setupCameraView()
+        animateCameraLayer()
     }
 }
 
@@ -44,19 +43,15 @@ extension ViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
             output.setSampleBufferDelegate(self, queue: DispatchQueue(label: "videoQueue"))
             captureSession.addOutput(output)
             
-            previewLayer1 = AVCaptureVideoPreviewLayer(session: captureSession)
-            previewLayer1.videoGravity = .resizeAspectFill
-            previewLayer1.frame = view.bounds
-            view.layer.addSublayer(previewLayer1)
-            
-            previewLayer2 = AVCaptureVideoPreviewLayer(session: captureSession)
-            previewLayer2.videoGravity = .resizeAspectFill
-            previewLayer2.frame = CGRect(x: UIScreen.main.bounds.width / 2 - Constants.circleSize / 2,
+            previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
+            previewLayer.videoGravity = .resizeAspectFill
+            previewLayer.frame = CGRect(x: UIScreen.main.bounds.width / 2 - Constants.circleSize / 2,
                                          y: UIScreen.main.bounds.height / 2 - Constants.circleSize / 2,
                                          width: Constants.circleSize,
                                          height: Constants.circleSize)
-            previewLayer2.cornerRadius = 150
-            view.layer.addSublayer(previewLayer2)
+            previewLayer.cornerRadius = Constants.circleSize / 2
+            
+            view.layer.addSublayer(previewLayer)
             
             sessionQueue.async {
                 self.captureSession.startRunning()
@@ -65,6 +60,16 @@ extension ViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
         } catch {
             print(error)
         }
+    }
+    
+    func animateCameraLayer() {
+        let scaleAnimation = CABasicAnimation(keyPath: "transform.scale")
+        scaleAnimation.fromValue = 1
+        scaleAnimation.toValue = 0.75
+        scaleAnimation.duration = 0.25
+        scaleAnimation.autoreverses = true
+        scaleAnimation.repeatCount = .infinity
+        previewLayer.add(scaleAnimation, forKey: "transform.scale")
     }
     
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
